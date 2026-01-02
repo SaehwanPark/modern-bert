@@ -1,0 +1,36 @@
+# Python / uv
+__pycache__/
+.venv/
+.uv/
+*.py[cod]
+*$py.class
+
+# Environment / Data
+.env
+results/
+artifacts/
+data/
+# Ensure the specific data directory from .env is ignored
+${DATA_DIR}
+
+# PyTorch / Training
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+.ipynb_checkpoints
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Merged codebase
+merged_*.*
