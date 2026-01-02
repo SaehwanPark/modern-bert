@@ -16,7 +16,7 @@ class ModernBertConfig:
   dropout_prob: float = 0.0
   attention_probs_dropout_prob: float = 0.0
 
-  # --- ModernBERT Specific (Missing Attributes) ---
+  # ModernBERT-specific
   # Every 3rd layer is Global, others are Local (Sliding Window)
   global_attn_every_n_layers: int = 3
   # Sliding window size (128 means 64 tokens left/right)
