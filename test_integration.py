@@ -5,9 +5,9 @@ from src.config import ModernBertConfig
 from src.model import ModernBertForMaskedLM
 
 
-def test_compare_with_hf():
-  model_id = "answerdotai/ModernBERT-base"
-  device = "cpu"
+def test_compare_with_hf() -> None:
+  model_id: str = "answerdotai/ModernBERT-base"
+  device: str = "cpu"
 
   # 1. Load HF Model
   hf_model = (
