@@ -4,12 +4,12 @@ from src.config import ModernBertConfig
 from src.model import ModernBertModel
 
 
-def test_modern_bert_forward():
+def test_modern_bert_forward() -> None:
   config = ModernBertConfig(num_hidden_layers=2, hidden_size=128, num_attention_heads=4)
   model = ModernBertModel(config).eval()
 
-  input_ids = torch.randint(0, config.vocab_size, (2, 16))
-  mask = torch.ones((2, 16))
+  input_ids: torch.Tensor = torch.randint(0, config.vocab_size, (2, 16))
+  mask: torch.Tensor = torch.ones((2, 16))
 
   with torch.no_grad():
     output = model(input_ids, attention_mask=mask)
@@ -18,7 +18,7 @@ def test_modern_bert_forward():
   assert not torch.isnan(output).any()
 
 
-def test_skip_first_norm_exists():
+def test_skip_first_norm_exists() -> None:
   config = ModernBertConfig(num_hidden_layers=2)
   model = ModernBertModel(config)
 

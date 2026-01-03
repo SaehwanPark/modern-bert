@@ -1,4 +1,5 @@
 import logging
+from typing import List, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -12,21 +13,26 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_top_k_predictions(logits, tokenizer, mask_idx, k=5):
+def get_top_k_predictions(
+  logits: torch.Tensor,
+  tokenizer: AutoTokenizer,
+  mask_idx: int,
+  k: int = 5
+) -> List[Tuple[str, float]]:
   """Extracts top-k tokens and their probabilities for a specific mask."""
   # ModernBERT uses the logits from the decoder head
   probs = F.softmax(logits[0, mask_idx], dim=-1)
   top_probs, top_ids = torch.topk(probs, k)
 
-  results = []
+  results: List[Tuple[str, float]] = []
   for i in range(k):
-    token = tokenizer.convert_ids_to_tokens([top_ids[i].item()])[0]
+    token: str = tokenizer.convert_ids_to_tokens([top_ids[i].item()])[0]
     results.append((token, top_probs[i].item()))
   return results
 
 
-def run_comparison(text, model_id="answerdotai/ModernBERT-base"):
-  device = "cuda" if torch.cuda.is_available() else "cpu"
+def run_comparison(text: str, model_id: str = "answerdotai/ModernBERT-base") -> None:
+  device: str = "cuda" if torch.cuda.is_available() else "cpu"
   logger.info(f"Using device: {device}")
 
   # 1. Prepare Tokenizer and Inputs

@@ -1,16 +1,19 @@
+from typing import Optional, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .config import ModernBertConfig
 from .layers import ModernBertAttention, ModernBertMLP
 
 
 class ModernBertLayer(nn.Module):
-  def __init__(self, config, layer_id: int):
+  def __init__(self, config: ModernBertConfig, layer_id: int) -> None:
     super().__init__()
     # ModernBERT uses bias-free LayerNorm
     # Skip attn_norm for Layer 0 (follows embedding norm)
-    self.attn_norm = (
+    self.attn_norm: Optional[nn.LayerNorm] = (
       nn.LayerNorm(config.hidden_size, eps=config.norm_eps, bias=False)
       if layer_id > 0
       else None
@@ -19,7 +22,13 @@ class ModernBertLayer(nn.Module):
     self.mlp_norm = nn.LayerNorm(config.hidden_size, eps=config.norm_eps, bias=False)
     self.mlp = ModernBertMLP(config)
 
-  def forward(self, x, cos, sin, mask=None):
+  def forward(
+    self,
+    x: torch.Tensor,
+    cos: torch.Tensor,
+    sin: torch.Tensor,
+    mask: Optional[torch.Tensor] = None
+  ) -> torch.Tensor:
     res = x
     x = self.attn_norm(x) if self.attn_norm else x
     x = res + self.attn(x, cos, sin, mask)
@@ -29,7 +38,7 @@ class ModernBertLayer(nn.Module):
 
 
 class ModernBertModel(nn.Module):
-  def __init__(self, config):
+  def __init__(self, config: ModernBertConfig) -> None:
     super().__init__()
     self.embeddings = nn.ModuleDict(
       {
@@ -43,10 +52,10 @@ class ModernBertModel(nn.Module):
     self.final_norm = nn.LayerNorm(config.hidden_size, eps=config.norm_eps, bias=False)
     self._register_rope_caches(config)
 
-  def _register_rope_caches(self, config):
-    dim = config.hidden_size // config.num_attention_heads
+  def _register_rope_caches(self, config: ModernBertConfig) -> None:
+    dim: int = config.hidden_size // config.num_attention_heads
 
-    def _get_cache(theta):
+    def _get_cache(theta: float) -> Tuple[torch.Tensor, torch.Tensor]:
       inv_freq = 1.0 / (theta ** (torch.arange(0, dim, 2).float() / dim))
       t = torch.arange(config.max_position_embeddings)
       freqs = torch.outer(t, inv_freq)
@@ -60,7 +69,11 @@ class ModernBertModel(nn.Module):
     self.register_buffer("rope_cos_l", lc, persistent=False)
     self.register_buffer("rope_sin_l", ls, persistent=False)
 
-  def forward(self, input_ids, attention_mask=None):
+  def forward(
+    self,
+    input_ids: torch.Tensor,
+    attention_mask: Optional[torch.Tensor] = None
+  ) -> torch.Tensor:
     x = self.embeddings.tok_embeddings(input_ids)
     x = self.embeddings.norm(x)
     mask = (
@@ -79,7 +92,7 @@ class ModernBertModel(nn.Module):
 
 
 class ModernBertForMaskedLM(nn.Module):
-  def __init__(self, config):
+  def __init__(self, config: ModernBertConfig) -> None:
     super().__init__()
     self.model = ModernBertModel(config)
     self.head = nn.ModuleDict(
@@ -90,7 +103,11 @@ class ModernBertForMaskedLM(nn.Module):
     )
     self.decoder = nn.Linear(config.hidden_size, config.vocab_size, bias=True)
 
-  def forward(self, input_ids, attention_mask=None):
+  def forward(
+    self,
+    input_ids: torch.Tensor,
+    attention_mask: Optional[torch.Tensor] = None
+  ) -> torch.Tensor:
     x = self.model(input_ids, attention_mask)
     # MLM Head sequence: Linear -> GELU -> LayerNorm
     x = self.head["norm"](F.gelu(self.head["dense"](x)))
